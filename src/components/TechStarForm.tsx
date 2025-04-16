@@ -1,50 +1,19 @@
+
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jsPDF } from "jspdf";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-
-const formSchema = z.object({
-  nome: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
-  idade: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-    message: "Idade deve ser um número válido",
-  }),
-  whatsapp: z.string().min(9, { message: "Número de WhatsApp inválido" }),
-  email: z.string().email({ message: "Email inválido" }).optional().or(z.literal("")),
-  escolaridade: z.enum(["basico", "medio", "tecnico", "universitario", "outro"]),
-  cursos: z.array(z.string()).refine((value) => value.length > 0, {
-    message: "Selecione pelo menos um curso",
-  }),
-  outroCurso: z.string().optional(),
-  nivelConhecimento: z.enum(["iniciante", "intermedio", "avancado"]),
-  comoSoube: z.enum(["amigos", "redes_sociais", "eventos", "outros"]),
-  outroComoSoube: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-const cursos = [
-  { id: "design", label: "Design Gráfico" },
-  { id: "logica", label: "Lógica de Programação" },
-  { id: "ia", label: "Inteligência Artificial" },
-  { id: "programacao", label: "Programação Iniciante" },
-  { id: "informatica", label: "Curso de Informática" },
-  { id: "eletronica", label: "Eletrônica Básica" },
-  { id: "outro", label: "Outro" },
-];
+import { FormValues, formSchema } from "@/types/formTypes";
+import { generatePDF } from "@/utils/pdfGenerator";
+import { shareOnWhatsApp } from "@/utils/whatsAppSender";
+import PersonalInfoFields from "@/components/form/PersonalInfoFields";
+import CourseFields from "@/components/form/CourseFields";
+import OtherInfoFields from "@/components/form/OtherInfoFields";
 
 const TechStarForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOutroCurso, setShowOutroCurso] = useState(false);
-  const [showOutroComoSoube, setShowOutroComoSoube] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,212 +31,28 @@ const TechStarForm = () => {
     },
   });
 
-  const handleCursosChange = (values: string[]) => {
-    if (values.includes("outro")) {
-      setShowOutroCurso(true);
-    } else {
-      setShowOutroCurso(false);
-      form.setValue("outroCurso", "");
-    }
-  };
-
-  const handleComoSoubeChange = (value: string) => {
-    if (value === "outros") {
-      setShowOutroComoSoube(true);
-    } else {
-      setShowOutroComoSoube(false);
-      form.setValue("outroComoSoube", "");
-    }
-  };
-
-  const generatePDF = (data: FormValues) => {
-    const doc = new jsPDF();
-    
-    try {
-      doc.addImage("/lovable-uploads/ae2350f3-052b-4933-ae8a-41224cb96b20.png", "PNG", 15, 15, 40, 40);
-    } catch (error) {
-      console.error("Error adding image:", error);
-    }
-    
-    doc.setFontSize(22);
-    doc.setTextColor(56, 189, 248);
-    doc.text("FICHA DE INSCRIÇÃO - TECH_STAR ACADEMY", 105, 30, { align: "center" });
-    
-    doc.setDrawColor(56, 189, 248);
-    doc.setLineWidth(0.5);
-    doc.line(20, 40, 190, 40);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    const startY = 50;
-    const lineHeight = 8;
-    let y = startY;
-    
-    doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248);
-    doc.text("INFORMAÇÕES PESSOAIS", 20, y);
-    y += lineHeight;
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    doc.text(`Nome: ${data.nome}`, 20, y);
-    y += lineHeight;
-    
-    doc.text(`Idade: ${data.idade}`, 20, y);
-    y += lineHeight;
-    
-    doc.text(`WhatsApp: ${data.whatsapp}`, 20, y);
-    y += lineHeight;
-    
-    doc.text(`Email: ${data.email || "Não informado"}`, 20, y);
-    y += lineHeight;
-    
-    doc.text(`Escolaridade: ${getEscolaridadeText(data.escolaridade)}`, 20, y);
-    y += lineHeight * 1.5;
-    
-    doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248);
-    doc.text("CURSOS DE INTERESSE", 20, y);
-    y += lineHeight;
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    const cursosSelectedText = data.cursos.map(curso => {
-      if (curso === "outro") {
-        return data.outroCurso;
-      }
-      return cursos.find(c => c.id === curso)?.label || curso;
-    }).join(", ");
-    
-    doc.text(`Cursos: ${cursosSelectedText}`, 20, y);
-    y += lineHeight;
-    
-    doc.text(`Nível de Conhecimento: ${getNivelText(data.nivelConhecimento)}`, 20, y);
-    y += lineHeight * 1.5;
-    
-    doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248);
-    doc.text("OUTRAS INFORMAÇÕES", 20, y);
-    y += lineHeight;
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    const comoSoubeText = data.comoSoube === "outros" 
-      ? data.outroComoSoube 
-      : getComoSoubeText(data.comoSoube);
-      
-    doc.text(`Como soube da TECH_STAR: ${comoSoubeText}`, 20, y);
-    y += lineHeight * 3;
-    
-    doc.setDrawColor(56, 189, 248);
-    doc.setLineWidth(0.5);
-    doc.line(20, y, 190, y);
-    y += lineHeight;
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text("TECH_STAR Academy - Ficha de Inscrição", 105, y, { align: "center" });
-    y += lineHeight;
-    
-    const dataAtual = new Date().toLocaleDateString();
-    doc.text(`Data de inscrição: ${dataAtual}`, 105, y, { align: "center" });
-    
-    return doc;
-  };
-
-  const getEscolaridadeText = (escolaridade: string) => {
-    const mapping: Record<string, string> = {
-      basico: "Ensino Básico",
-      medio: "Ensino Médio",
-      tecnico: "Ensino Técnico",
-      universitario: "Ensino Universitário",
-      outro: "Outro",
-    };
-    return mapping[escolaridade] || escolaridade;
-  };
-
-  const getNivelText = (nivel: string) => {
-    const mapping: Record<string, string> = {
-      iniciante: "Iniciante",
-      intermedio: "Intermédio",
-      avancado: "Avançado",
-    };
-    return mapping[nivel] || nivel;
-  };
-
-  const getComoSoubeText = (comoSoube: string) => {
-    const mapping: Record<string, string> = {
-      amigos: "Através de amigos",
-      redes_sociais: "Redes sociais",
-      eventos: "Eventos",
-      outros: "Outros",
-    };
-    return mapping[comoSoube] || comoSoube;
-  };
-
-  const shareOnWhatsApp = (pdfBase64: string, data: FormValues) => {
-    const nomeFormatado = data.nome.split(' ')[0];
-    const message = encodeURIComponent(
-      `*Nova Inscrição TECH_STAR Academy*\n\n` +
-      `*Nome:* ${data.nome}\n` +
-      `*Idade:* ${data.idade}\n` +
-      `*WhatsApp:* ${data.whatsapp}\n` +
-      `*Cursos de Interesse:* ${data.cursos.map(curso => {
-        if (curso === "outro") return data.outroCurso;
-        return cursos.find(c => c.id === curso)?.label || curso;
-      }).join(", ")}\n\n` +
-      `_O PDF com todos os detalhes da inscrição foi enviado para o email da empresa._`
-    );
-    
-    const whatsappNumber = "+244952993627";
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-    
-    window.open(whatsappUrl, "_blank");
-    
-    toast.info("Resumo da inscrição enviado para o WhatsApp da TECH_STAR. O PDF completo foi enviado por email.");
-  };
-
-  const sendEmail = async (pdfBase64: string, data: FormValues) => {
-    try {
-      const base64PDF = pdfBase64.split(';base64,').pop() || "";
-      
-      console.log("Enviando email com PDF para mendeshenrique158@gmail.com");
-      console.log("Dados do inscrito:", data);
-      console.log("PDF Base64 (primeiros 100 caracteres):", base64PDF.substring(0, 100) + "...");
-      
-      toast.success("Email com o PDF enviado para mendeshenrique158@gmail.com");
-      return true;
-    } catch (error) {
-      console.error("Erro ao enviar email:", error);
-      toast.error("Não foi possível enviar o email. Verifique a conexão e tente novamente.");
-      return false;
-    }
-  };
-
   const onSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
       
+      // Gerar o PDF
       const doc = generatePDF(data);
-      const pdfBase64 = doc.output('datauristring');
       
+      // Salvar localmente
       doc.save(`Inscrição_${data.nome}_TECHSTAR.pdf`);
       
-      shareOnWhatsApp(pdfBase64, data);
+      // Converter para base64 para envio
+      const pdfBase64 = doc.output('datauristring');
       
-      const emailSent = await sendEmail(pdfBase64, data);
+      // Enviar para WhatsApp
+      const sent = shareOnWhatsApp(pdfBase64, data);
       
-      if (emailSent) {
-        toast.success("Obrigado pela inscrição! A tua ficha foi enviada e em breve receberás o nosso contacto.");
+      if (sent) {
+        toast.success("Obrigado pela inscrição! Os dados foram enviados para a TECH_STAR Academy.");
+        
+        // Resetar formulário
+        form.reset();
       }
-      
-      form.reset();
-      setShowOutroCurso(false);
-      setShowOutroComoSoube(false);
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
       toast.error("Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.");
@@ -278,263 +63,23 @@ const TechStarForm = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-techstar-blue text-glow">Informações Pessoais</h2>
+      <FormProvider {...form}>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <PersonalInfoFields />
+            <CourseFields />
+            <OtherInfoFields />
             
-            <FormField
-              control={form.control}
-              name="nome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite seu nome completo" {...field} className="bg-muted/80 border-techstar-blue" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="idade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Idade</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite sua idade" {...field} className="bg-muted/80 border-techstar-blue" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="whatsapp"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número do WhatsApp (com DD, ex: +244 9xx xxx xxx)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+244 9xx xxx xxx" {...field} className="bg-muted/80 border-techstar-blue" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="seu.email@exemplo.com" {...field} className="bg-muted/80 border-techstar-blue" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="escolaridade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Escolaridade</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-muted/80 border-techstar-blue">
-                        <SelectValue placeholder="Selecione sua escolaridade" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="basico">Ensino Básico</SelectItem>
-                      <SelectItem value="medio">Ensino Médio</SelectItem>
-                      <SelectItem value="tecnico">Ensino Técnico</SelectItem>
-                      <SelectItem value="universitario">Ensino Universitário</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-techstar-blue text-glow">Cursos de Interesse</h2>
-            
-            <FormField
-              control={form.control}
-              name="cursos"
-              render={() => (
-                <FormItem>
-                  <div className="mb-4">
-                    <FormLabel>Cursos de Interesse (selecione pelo menos um)</FormLabel>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {cursos.map((curso) => (
-                      <FormField
-                        key={curso.id}
-                        control={form.control}
-                        name="cursos"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={curso.id}
-                              className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(curso.id)}
-                                  onCheckedChange={(checked) => {
-                                    const updatedValue = checked
-                                      ? [...field.value, curso.id]
-                                      : field.value?.filter(
-                                          (value) => value !== curso.id
-                                        );
-                                    field.onChange(updatedValue);
-                                    handleCursosChange(updatedValue);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer">
-                                {curso.label}
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {showOutroCurso && (
-              <FormField
-                control={form.control}
-                name="outroCurso"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Especifique outro curso</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Digite o curso de interesse" {...field} className="bg-muted/80 border-techstar-blue" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            <FormField
-              control={form.control}
-              name="nivelConhecimento"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Nível de Conhecimento</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="iniciante" />
-                        </FormControl>
-                        <FormLabel className="font-normal cursor-pointer">
-                          Iniciante
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="intermedio" />
-                        </FormControl>
-                        <FormLabel className="font-normal cursor-pointer">
-                          Intermédio
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="avancado" />
-                        </FormControl>
-                        <FormLabel className="font-normal cursor-pointer">
-                          Avançado
-                        </FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-techstar-blue text-glow">Outras Informações</h2>
-            
-            <FormField
-              control={form.control}
-              name="comoSoube"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Como soube da TECH_STAR?</FormLabel>
-                  <Select 
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      handleComoSoubeChange(value);
-                    }} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="bg-muted/80 border-techstar-blue">
-                        <SelectValue placeholder="Selecione como soube da TECH_STAR" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="amigos">Amigos</SelectItem>
-                      <SelectItem value="redes_sociais">Redes Sociais</SelectItem>
-                      <SelectItem value="eventos">Eventos</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {showOutroComoSoube && (
-              <FormField
-                control={form.control}
-                name="outroComoSoube"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Especifique como soube</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Digite como soube da TECH_STAR" {...field} className="bg-muted/80 border-techstar-blue" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-          </div>
-          
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="w-full tech-gradient hover:opacity-90 transition-all duration-300 box-glow"
-          >
-            {isSubmitting ? "Enviando..." : "Enviar Inscrição"}
-          </Button>
-        </form>
-      </Form>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full tech-gradient hover:opacity-90 transition-all duration-300 box-glow"
+            >
+              {isSubmitting ? "Enviando..." : "Enviar Inscrição"}
+            </Button>
+          </form>
+        </Form>
+      </FormProvider>
     </div>
   );
 };
