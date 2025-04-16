@@ -1,16 +1,23 @@
 
 import { Link } from "react-router-dom";
-import { Church, Users, Calendar, Package } from "lucide-react";
+import { Users, Calendar, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   return (
     <header className="bg-indigo-700 text-white shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center space-x-2">
-            <Church className="h-8 w-8" />
-            <span className="text-xl font-bold">Igreja Online</span>
+        <div className="flex items-center justify-between py-3">
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/lovable-uploads/bf19cc8d-73fb-4d7a-9061-d25a0fcf1b22.png" 
+              alt="Logo Rhema" 
+              className="h-14 w-14 rounded-full bg-white p-1" 
+            />
+            <div>
+              <span className="text-xl font-bold block">Centro Rhema</span>
+              <span className="text-xs text-indigo-100">Centro de Formação e de Missões</span>
+            </div>
           </Link>
           
           <nav className="hidden md:flex space-x-6">
