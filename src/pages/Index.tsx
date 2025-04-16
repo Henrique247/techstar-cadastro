@@ -1,11 +1,17 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import TechStarForm from "@/components/TechStarForm";
+import TechStarHeader from "@/components/TechStarHeader";
+import TechStarFooter from "@/components/TechStarFooter";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-techstar-dark text-techstar-light py-10 px-4">
+      <div className="container mx-auto">
+        <TechStarHeader />
+        <div className="bg-gray-900/50 backdrop-blur-sm p-6 md:p-8 rounded-lg border border-gray-800 shadow-lg">
+          <TechStarForm />
+        </div>
+        <TechStarFooter />
       </div>
     </div>
   );
