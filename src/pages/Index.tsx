@@ -1,4 +1,5 @@
 
+import { Toaster } from "@/components/ui/toaster";
 import TechStarForm from "@/components/TechStarForm";
 import TechStarHeader from "@/components/TechStarHeader";
 import TechStarFooter from "@/components/TechStarFooter";
@@ -13,6 +14,8 @@ const Index = () => {
         </div>
         <TechStarFooter />
       </div>
+      {/* Add the Toaster component here instead of at the app level */}
+      <Toaster />
     </div>
   );
 };

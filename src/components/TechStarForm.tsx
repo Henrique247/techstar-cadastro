@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -13,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-// Definição do esquema de validação
 const formSchema = z.object({
   nome: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   idade: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -64,7 +62,6 @@ const TechStarForm = () => {
     },
   });
 
-  // Manipulador para mostrar/ocultar o campo "Outro curso"
   const handleCursosChange = (values: string[]) => {
     if (values.includes("outro")) {
       setShowOutroCurso(true);
@@ -74,7 +71,6 @@ const TechStarForm = () => {
     }
   };
 
-  // Manipulador para mostrar/ocultar o campo "Outro como soube"
   const handleComoSoubeChange = (value: string) => {
     if (value === "outros") {
       setShowOutroComoSoube(true);
@@ -84,43 +80,37 @@ const TechStarForm = () => {
     }
   };
 
-  // Função para gerar o PDF
   const generatePDF = (data: FormValues) => {
     const doc = new jsPDF();
     
-    // Adicionar imagem de cabeçalho
     try {
       doc.addImage("/lovable-uploads/ae2350f3-052b-4933-ae8a-41224cb96b20.png", "PNG", 15, 15, 40, 40);
     } catch (error) {
       console.error("Error adding image:", error);
     }
     
-    // Título
     doc.setFontSize(22);
-    doc.setTextColor(56, 189, 248); // Azul neon
+    doc.setTextColor(56, 189, 248);
     doc.text("FICHA DE INSCRIÇÃO - TECH_STAR ACADEMY", 105, 30, { align: "center" });
     
-    // Linha decorativa
-    doc.setDrawColor(56, 189, 248); // Azul neon
+    doc.setDrawColor(56, 189, 248);
     doc.setLineWidth(0.5);
     doc.line(20, 40, 190, 40);
     
-    // Dados do formulário
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Preto
+    doc.setTextColor(0, 0, 0);
     
     const startY = 50;
     const lineHeight = 8;
     let y = startY;
     
-    // Informações pessoais
     doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248); // Azul neon
+    doc.setTextColor(56, 189, 248);
     doc.text("INFORMAÇÕES PESSOAIS", 20, y);
     y += lineHeight;
     
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Preto
+    doc.setTextColor(0, 0, 0);
     
     doc.text(`Nome: ${data.nome}`, 20, y);
     y += lineHeight;
@@ -137,14 +127,13 @@ const TechStarForm = () => {
     doc.text(`Escolaridade: ${getEscolaridadeText(data.escolaridade)}`, 20, y);
     y += lineHeight * 1.5;
     
-    // Cursos de interesse
     doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248); // Azul neon
+    doc.setTextColor(56, 189, 248);
     doc.text("CURSOS DE INTERESSE", 20, y);
     y += lineHeight;
     
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Preto
+    doc.setTextColor(0, 0, 0);
     
     const cursosSelectedText = data.cursos.map(curso => {
       if (curso === "outro") {
@@ -159,14 +148,13 @@ const TechStarForm = () => {
     doc.text(`Nível de Conhecimento: ${getNivelText(data.nivelConhecimento)}`, 20, y);
     y += lineHeight * 1.5;
     
-    // Outras informações
     doc.setFontSize(14);
-    doc.setTextColor(56, 189, 248); // Azul neon
+    doc.setTextColor(56, 189, 248);
     doc.text("OUTRAS INFORMAÇÕES", 20, y);
     y += lineHeight;
     
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Preto
+    doc.setTextColor(0, 0, 0);
     
     const comoSoubeText = data.comoSoube === "outros" 
       ? data.outroComoSoube 
@@ -175,14 +163,13 @@ const TechStarForm = () => {
     doc.text(`Como soube da TECH_STAR: ${comoSoubeText}`, 20, y);
     y += lineHeight * 3;
     
-    // Rodapé
-    doc.setDrawColor(56, 189, 248); // Azul neon
+    doc.setDrawColor(56, 189, 248);
     doc.setLineWidth(0.5);
     doc.line(20, y, 190, y);
     y += lineHeight;
     
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100); // Cinza
+    doc.setTextColor(100, 100, 100);
     doc.text("TECH_STAR Academy - Ficha de Inscrição", 105, y, { align: "center" });
     y += lineHeight;
     
@@ -192,7 +179,6 @@ const TechStarForm = () => {
     return doc;
   };
 
-  // Função para obter texto da escolaridade
   const getEscolaridadeText = (escolaridade: string) => {
     const mapping: Record<string, string> = {
       basico: "Ensino Básico",
@@ -204,7 +190,6 @@ const TechStarForm = () => {
     return mapping[escolaridade] || escolaridade;
   };
 
-  // Função para obter texto do nível de conhecimento
   const getNivelText = (nivel: string) => {
     const mapping: Record<string, string> = {
       iniciante: "Iniciante",
@@ -214,7 +199,6 @@ const TechStarForm = () => {
     return mapping[nivel] || nivel;
   };
 
-  // Função para obter texto de como soube
   const getComoSoubeText = (comoSoube: string) => {
     const mapping: Record<string, string> = {
       amigos: "Através de amigos",
@@ -225,53 +209,37 @@ const TechStarForm = () => {
     return mapping[comoSoube] || comoSoube;
   };
 
-  // Função para compartilhar no WhatsApp
   const shareOnWhatsApp = (pdfBase64: string) => {
     const message = encodeURIComponent("Nova inscrição na TECH_STAR Academy!");
     const whatsappNumber = "+244952993627";
     
-    // Como não podemos enviar arquivos diretamente via URL do WhatsApp,
-    // enviamos uma mensagem indicando que um novo registro foi feito
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
     window.open(whatsappUrl, "_blank");
     
-    // Nota: Na prática, precisaríamos de uma API de backend para enviar o PDF via WhatsApp
     toast.info("Mensagem enviada para o WhatsApp da TECH_STAR. O PDF precisa ser anexado manualmente.");
   };
 
-  // Função para enviar por email
   const sendEmail = async (pdfBase64: string, data: FormValues) => {
-    // Na prática, isso seria feito através de uma API de backend
-    // Aqui estamos apenas simulando o envio
-    
     toast.info("Email seria enviado para mendeshenrique158@gmail.com em uma implementação completa.");
     
-    // Nota: Na prática, usaríamos algum serviço como EmailJS, SendGrid, etc.
     console.log("Enviando email com PDF para mendeshenrique158@gmail.com");
   };
 
-  // Função de envio do formulário
   const onSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
       
-      // Gerar o PDF
       const doc = generatePDF(data);
       const pdfBase64 = doc.output('datauristring');
       
-      // Salvar o PDF
       doc.save(`Inscrição_${data.nome}_TECHSTAR.pdf`);
       
-      // Compartilhar no WhatsApp
       shareOnWhatsApp(pdfBase64);
       
-      // Enviar por email
       await sendEmail(pdfBase64, data);
       
-      // Mostrar mensagem de sucesso
       toast.success("Obrigado pela inscrição! A tua ficha foi enviada e em breve receberás o nosso contacto.");
       
-      // Resetar o formulário
       form.reset();
       setShowOutroCurso(false);
       setShowOutroComoSoube(false);
