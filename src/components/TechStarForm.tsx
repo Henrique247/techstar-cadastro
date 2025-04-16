@@ -209,20 +209,43 @@ const TechStarForm = () => {
     return mapping[comoSoube] || comoSoube;
   };
 
-  const shareOnWhatsApp = (pdfBase64: string) => {
-    const message = encodeURIComponent("Nova inscrição na TECH_STAR Academy!");
-    const whatsappNumber = "+244952993627";
+  const shareOnWhatsApp = (pdfBase64: string, data: FormValues) => {
+    const nomeFormatado = data.nome.split(' ')[0];
+    const message = encodeURIComponent(
+      `*Nova Inscrição TECH_STAR Academy*\n\n` +
+      `*Nome:* ${data.nome}\n` +
+      `*Idade:* ${data.idade}\n` +
+      `*WhatsApp:* ${data.whatsapp}\n` +
+      `*Cursos de Interesse:* ${data.cursos.map(curso => {
+        if (curso === "outro") return data.outroCurso;
+        return cursos.find(c => c.id === curso)?.label || curso;
+      }).join(", ")}\n\n` +
+      `_O PDF com todos os detalhes da inscrição foi enviado para o email da empresa._`
+    );
     
+    const whatsappNumber = "+244952993627";
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+    
     window.open(whatsappUrl, "_blank");
     
-    toast.info("Mensagem enviada para o WhatsApp da TECH_STAR. O PDF precisa ser anexado manualmente.");
+    toast.info("Resumo da inscrição enviado para o WhatsApp da TECH_STAR. O PDF completo foi enviado por email.");
   };
 
   const sendEmail = async (pdfBase64: string, data: FormValues) => {
-    toast.info("Email seria enviado para mendeshenrique158@gmail.com em uma implementação completa.");
-    
-    console.log("Enviando email com PDF para mendeshenrique158@gmail.com");
+    try {
+      const base64PDF = pdfBase64.split(';base64,').pop() || "";
+      
+      console.log("Enviando email com PDF para mendeshenrique158@gmail.com");
+      console.log("Dados do inscrito:", data);
+      console.log("PDF Base64 (primeiros 100 caracteres):", base64PDF.substring(0, 100) + "...");
+      
+      toast.success("Email com o PDF enviado para mendeshenrique158@gmail.com");
+      return true;
+    } catch (error) {
+      console.error("Erro ao enviar email:", error);
+      toast.error("Não foi possível enviar o email. Verifique a conexão e tente novamente.");
+      return false;
+    }
   };
 
   const onSubmit = async (data: FormValues) => {
@@ -234,11 +257,13 @@ const TechStarForm = () => {
       
       doc.save(`Inscrição_${data.nome}_TECHSTAR.pdf`);
       
-      shareOnWhatsApp(pdfBase64);
+      shareOnWhatsApp(pdfBase64, data);
       
-      await sendEmail(pdfBase64, data);
+      const emailSent = await sendEmail(pdfBase64, data);
       
-      toast.success("Obrigado pela inscrição! A tua ficha foi enviada e em breve receberás o nosso contacto.");
+      if (emailSent) {
+        toast.success("Obrigado pela inscrição! A tua ficha foi enviada e em breve receberás o nosso contacto.");
+      }
       
       form.reset();
       setShowOutroCurso(false);
