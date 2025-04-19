@@ -60,41 +60,94 @@ export type Database = {
       membros: {
         Row: {
           atualizado_em: string
+          categoria: string | null
           criado_em: string
           data_entrada: string
           data_nascimento: string | null
           email: string | null
           endereco: string | null
+          funcao: string | null
+          genero: string | null
           id: string
+          idade: number | null
           nome: string
           observacoes: string | null
+          status: string | null
           telefone: string | null
         }
         Insert: {
           atualizado_em?: string
+          categoria?: string | null
           criado_em?: string
           data_entrada: string
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
+          funcao?: string | null
+          genero?: string | null
           id?: string
+          idade?: number | null
           nome: string
           observacoes?: string | null
+          status?: string | null
           telefone?: string | null
         }
         Update: {
           atualizado_em?: string
+          categoria?: string | null
           criado_em?: string
           data_entrada?: string
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
+          funcao?: string | null
+          genero?: string | null
           id?: string
+          idade?: number | null
           nome?: string
           observacoes?: string | null
+          status?: string | null
           telefone?: string | null
         }
         Relationships: []
+      }
+      presencas: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          culto: string
+          data: string
+          id: string
+          membro_id: string
+          presente: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          culto: string
+          data: string
+          id?: string
+          membro_id: string
+          presente?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          culto?: string
+          data?: string
+          id?: string
+          membro_id?: string
+          presente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presencas_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "membros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recursos: {
         Row: {

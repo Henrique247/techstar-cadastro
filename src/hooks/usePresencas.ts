@@ -10,10 +10,17 @@ export function usePresencas() {
   const { data: presencas, isLoading: isLoadingPresencas } = useQuery({
     queryKey: ['presencas'],
     queryFn: async () => {
-      // We need to use the raw query method since 'presencas' isn't in the types yet
       const { data, error } = await supabase
         .from('presencas')
-        .select('*')
+        .select(`
+          id,
+          membro_id,
+          data,
+          culto,
+          presente,
+          criado_em,
+          atualizado_em
+        `)
         .order('data', { ascending: false });
       
       if (error) {
@@ -48,7 +55,7 @@ export function usePresencas() {
       // Verificar se já existe um registro para este membro, data e culto
       const { data: existing } = await supabase
         .from('presencas')
-        .select('*')
+        .select()
         .eq('membro_id', novaPresenca.membro_id)
         .eq('data', novaPresenca.data)
         .eq('culto', novaPresenca.culto)
