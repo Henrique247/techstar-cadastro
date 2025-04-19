@@ -23,20 +23,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import AddMembroDialog from "@/components/membros/AddMembroDialog";
+import EditMembroDialog from "@/components/membros/EditMembroDialog";
 import { useMembros } from "@/hooks/useMembros";
 import type { Membro } from "@/types/models";
 
 const Membros = () => {
-  const { membros, isLoading, adicionarMembro, removerMembro } = useMembros();
+  const { membros, isLoading, adicionarMembro, atualizarMembro, removerMembro } = useMembros();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [membroToEdit, setMembroToEdit] = useState<Membro | null>(null);
   const [membroToDelete, setMembroToDelete] = useState<Membro | null>(null);
 
   const filteredMembros = membros?.filter(membro =>
     membro.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (membro.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   ) ?? [];
+
+  const handleEdit = (membro: Membro) => {
+    setMembroToEdit(membro);
+    setEditDialogOpen(true);
+  };
 
   const handleDelete = async (membro: Membro) => {
     setMembroToDelete(membro);
@@ -102,7 +110,11 @@ const Membros = () => {
                   <TableCell>{new Date(membro.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEdit(membro)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -139,6 +151,22 @@ const Membros = () => {
           setDialogOpen(false);
         }} 
       />
+
+      {membroToEdit && (
+        <EditMembroDialog
+          open={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            setMembroToEdit(null);
+          }}
+          onSave={async (membroAtualizado) => {
+            await atualizarMembro.mutateAsync(membroAtualizado);
+            setEditDialogOpen(false);
+            setMembroToEdit(null);
+          }}
+          membro={membroToEdit}
+        />
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
