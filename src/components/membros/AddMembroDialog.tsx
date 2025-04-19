@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -11,49 +12,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import type { NovoMembro } from "@/types/models";
 
 interface AddMembroDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (membro: any) => void;
+  onSave: (membro: NovoMembro) => void;
 }
 
 const AddMembroDialog = ({ open, onClose, onSave }: AddMembroDialogProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NovoMembro>({
     nome: "",
     telefone: "",
     email: "",
-    dataEntrada: new Date().toISOString().split('T')[0],
+    data_entrada: new Date().toISOString().split('T')[0],
+    data_nascimento: "",
     endereco: "",
-    dataNascimento: "",
     observacoes: ""
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value || null }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nome) {
-      toast.error("O nome é obrigatório");
-      return;
-    }
-    
     onSave(formData);
-    toast.success("Membro adicionado com sucesso!");
     setFormData({
       nome: "",
       telefone: "",
       email: "",
-      dataEntrada: new Date().toISOString().split('T')[0],
+      data_entrada: new Date().toISOString().split('T')[0],
+      data_nascimento: "",
       endereco: "",
-      dataNascimento: "",
       observacoes: ""
     });
-    onClose();
   };
 
   return (
@@ -87,7 +83,7 @@ const AddMembroDialog = ({ open, onClose, onSave }: AddMembroDialogProps) => {
               <Input
                 id="telefone"
                 name="telefone"
-                value={formData.telefone}
+                value={formData.telefone || ""}
                 onChange={handleChange}
                 className="col-span-3"
               />
@@ -100,33 +96,34 @@ const AddMembroDialog = ({ open, onClose, onSave }: AddMembroDialogProps) => {
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ""}
                 onChange={handleChange}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dataEntrada" className="text-right">
+              <Label htmlFor="data_entrada" className="text-right">
                 Data de Entrada
               </Label>
               <Input
-                id="dataEntrada"
-                name="dataEntrada"
+                id="data_entrada"
+                name="data_entrada"
                 type="date"
-                value={formData.dataEntrada}
+                value={formData.data_entrada}
                 onChange={handleChange}
                 className="col-span-3"
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dataNascimento" className="text-right">
+              <Label htmlFor="data_nascimento" className="text-right">
                 Data de Nascimento
               </Label>
               <Input
-                id="dataNascimento"
-                name="dataNascimento"
+                id="data_nascimento"
+                name="data_nascimento"
                 type="date"
-                value={formData.dataNascimento}
+                value={formData.data_nascimento || ""}
                 onChange={handleChange}
                 className="col-span-3"
               />
@@ -138,9 +135,22 @@ const AddMembroDialog = ({ open, onClose, onSave }: AddMembroDialogProps) => {
               <Input
                 id="endereco"
                 name="endereco"
-                value={formData.endereco}
+                value={formData.endereco || ""}
                 onChange={handleChange}
                 className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="observacoes" className="text-right pt-2">
+                Observações
+              </Label>
+              <Textarea
+                id="observacoes"
+                name="observacoes"
+                value={formData.observacoes || ""}
+                onChange={handleChange}
+                className="col-span-3"
+                rows={3}
               />
             </div>
           </div>

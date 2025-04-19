@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      eventos: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          data: string
+          descricao: string | null
+          horario: string
+          id: string
+          local: string
+          titulo: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          data: string
+          descricao?: string | null
+          horario: string
+          id?: string
+          local: string
+          titulo: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          data?: string
+          descricao?: string | null
+          horario?: string
+          id?: string
+          local?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       "Igreja RHEMA": {
         Row: {
           id: number
@@ -21,6 +54,75 @@ export type Database = {
         Update: {
           id?: number
           "members e attendance"?: string
+        }
+        Relationships: []
+      }
+      membros: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          data_entrada: string
+          data_nascimento: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          data_entrada: string
+          data_nascimento?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          data_entrada?: string
+          data_nascimento?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
+      recursos: {
+        Row: {
+          atualizado_em: string
+          categoria: string
+          criado_em: string
+          id: string
+          localizacao: string | null
+          nome: string
+          quantidade: number
+        }
+        Insert: {
+          atualizado_em?: string
+          categoria: string
+          criado_em?: string
+          id?: string
+          localizacao?: string | null
+          nome: string
+          quantidade: number
+        }
+        Update: {
+          atualizado_em?: string
+          categoria?: string
+          criado_em?: string
+          id?: string
+          localizacao?: string | null
+          nome?: string
+          quantidade?: number
         }
         Relationships: []
       }

@@ -1,38 +1,54 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Search, Edit, Trash2, User } from "lucide-react";
+import { UserPlus, Search, Edit, Trash2, User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import AddMembroDialog from "@/components/membros/AddMembroDialog";
-
-// Mock data para teste
-const membrosMock = [
-  { id: 1, nome: "João Silva", telefone: "(11) 98765-4321", email: "joao@exemplo.com", dataEntrada: "2018-05-12" },
-  { id: 2, nome: "Maria Oliveira", telefone: "(11) 91234-5678", email: "maria@exemplo.com", dataEntrada: "2019-03-22" },
-  { id: 3, nome: "Pedro Santos", telefone: "(11) 98888-7777", email: "pedro@exemplo.com", dataEntrada: "2020-01-15" },
-];
+import { useMembros } from "@/hooks/useMembros";
+import type { Membro } from "@/types/models";
 
 const Membros = () => {
-  const [membros, setMembros] = useState(membrosMock);
+  const { membros, isLoading, adicionarMembro, removerMembro } = useMembros();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [membroToDelete, setMembroToDelete] = useState<Membro | null>(null);
 
-  const filteredMembros = membros.filter(membro => 
-    membro.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    membro.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMembros = membros?.filter(membro =>
+    membro.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (membro.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+  ) ?? [];
 
-  const adicionarMembro = (novoMembro: any) => {
-    setMembros([...membros, { ...novoMembro, id: membros.length + 1 }]);
+  const handleDelete = async (membro: Membro) => {
+    setMembroToDelete(membro);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (membroToDelete) {
+      await removerMembro.mutateAsync(membroToDelete.id);
+      setDeleteDialogOpen(false);
+      setMembroToDelete(null);
+    }
   };
 
   return (
@@ -60,7 +76,6 @@ const Membros = () => {
           <TableCaption>Lista de membros da igreja</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">#</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Email</TableHead>
@@ -69,20 +84,33 @@ const Membros = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMembros.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                    <p>Carregando membros...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredMembros.length > 0 ? (
               filteredMembros.map((membro) => (
                 <TableRow key={membro.id}>
-                  <TableCell>{membro.id}</TableCell>
                   <TableCell className="font-medium">{membro.nome}</TableCell>
-                  <TableCell>{membro.telefone}</TableCell>
-                  <TableCell>{membro.email}</TableCell>
-                  <TableCell>{new Date(membro.dataEntrada).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{membro.telefone || "—"}</TableCell>
+                  <TableCell>{membro.email || "—"}</TableCell>
+                  <TableCell>{new Date(membro.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Button variant="ghost" size="icon">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(membro)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -91,7 +119,7 @@ const Membros = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6">
+                <TableCell colSpan={5} className="text-center py-6">
                   <div className="flex flex-col items-center justify-center text-gray-500">
                     <User className="h-12 w-12 mb-2 opacity-20" />
                     <p>Nenhum membro encontrado</p>
@@ -103,7 +131,34 @@ const Membros = () => {
         </Table>
       </div>
 
-      <AddMembroDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={adicionarMembro} />
+      <AddMembroDialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        onSave={async (novoMembro) => {
+          await adicionarMembro.mutateAsync(novoMembro);
+          setDialogOpen(false);
+        }} 
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o membro {membroToDelete?.nome}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
