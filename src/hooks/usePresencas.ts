@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Membro, Presenca, NovaPresenca } from "@/types/models";
+import type { Membro, Presenca, NovaPresenca, RelatorioFaltas } from "@/types/models";
 import { toast } from "sonner";
 
 export function usePresencas() {
@@ -10,6 +10,7 @@ export function usePresencas() {
   const { data: presencas, isLoading: isLoadingPresencas } = useQuery({
     queryKey: ['presencas'],
     queryFn: async () => {
+      // We need to use the raw query method since 'presencas' isn't in the types yet
       const { data, error } = await supabase
         .from('presencas')
         .select('*')
@@ -73,7 +74,7 @@ export function usePresencas() {
         // Criar novo registro
         const { data, error } = await supabase
           .from('presencas')
-          .insert(novaPresenca)
+          .insert([novaPresenca])
           .select()
           .single();
 
@@ -113,7 +114,7 @@ export function usePresencas() {
     const dataInicioRelatorio = new Date();
     dataInicioRelatorio.setDate(hoje.getDate() - (numSemanas * 7));
     
-    const relatorioFaltas = membros
+    const relatorioFaltas: RelatorioFaltas[] = membros
       .filter(membro => membro.status === 'Ativo')
       .map(membro => {
         const presencasDoMembro = presencas.filter(
