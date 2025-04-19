@@ -12,6 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { Membro } from "@/types/models";
 
@@ -78,6 +85,30 @@ const EditMembroDialog = ({
         return newErrors;
       });
     }
+
+    if (name === "idade" && value && (isNaN(Number(value)) || Number(value) < 0)) {
+      setErrors(prev => ({ ...prev, idade: "Idade inválida" }));
+    } else if (name === "idade") {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idade;
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string | null) => {
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      const originalValue = membro[name as keyof Membro];
+      const hasFieldChanged = value !== originalValue;
+      
+      if (hasFieldChanged || hasChanges) {
+        setHasChanges(true);
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,7 +132,7 @@ const EditMembroDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar membro</DialogTitle>
           <DialogDescription>
@@ -131,6 +162,50 @@ const EditMembroDialog = ({
                 )}
               </div>
             </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="idade" className="text-right">
+                Idade
+              </Label>
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="idade"
+                  name="idade"
+                  type="number"
+                  value={formData.idade || ""}
+                  onChange={handleChange}
+                  className={`${errors.idade ? 'border-red-500' : ''}`}
+                />
+                {errors.idade && (
+                  <p className="text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.idade}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="genero" className="text-right">
+                Gênero
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.genero || ""}
+                  onValueChange={(value) => handleSelectChange("genero", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o gênero" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Masculino">Masculino</SelectItem>
+                    <SelectItem value="Feminino">Feminino</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="telefone" className="text-right">
                 Telefone
@@ -143,6 +218,7 @@ const EditMembroDialog = ({
                 className="col-span-3"
               />
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 Email
@@ -164,6 +240,7 @@ const EditMembroDialog = ({
                 )}
               </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="data_entrada" className="text-right">
                 Data de Entrada
@@ -186,6 +263,7 @@ const EditMembroDialog = ({
                 )}
               </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="data_nascimento" className="text-right">
                 Data de Nascimento
@@ -199,6 +277,7 @@ const EditMembroDialog = ({
                 className="col-span-3"
               />
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="endereco" className="text-right">
                 Endereço
@@ -211,6 +290,72 @@ const EditMembroDialog = ({
                 className="col-span-3"
               />
             </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="categoria" className="text-right">
+                Categoria
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.categoria || ""}
+                  onValueChange={(value) => handleSelectChange("categoria", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Jovem">Jovem</SelectItem>
+                    <SelectItem value="Mamã">Mamã</SelectItem>
+                    <SelectItem value="Papá">Papá</SelectItem>
+                    <SelectItem value="Visitante">Visitante</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">
+                Status
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.status || ""}
+                  onValueChange={(value) => handleSelectChange("status", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="funcao" className="text-right">
+                Função na Igreja
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.funcao || ""}
+                  onValueChange={(value) => handleSelectChange("funcao", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Obreiro">Obreiro</SelectItem>
+                    <SelectItem value="Discípulo">Discípulo</SelectItem>
+                    <SelectItem value="Em formação">Em formação</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="observacoes" className="text-right pt-2">
                 Observações

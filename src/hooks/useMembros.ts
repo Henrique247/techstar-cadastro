@@ -86,11 +86,27 @@ export function useMembros() {
     }
   });
 
+  const filtrarMembros = (membros: Membro[] | undefined, termo: string, categoria?: string) => {
+    if (!membros) return [];
+    
+    return membros.filter(membro => {
+      const matchesTermo = termo ? 
+        membro.nome.toLowerCase().includes(termo.toLowerCase()) || 
+        (membro.email?.toLowerCase() || "").includes(termo.toLowerCase()) : 
+        true;
+      
+      const matchesCategoria = categoria ? membro.categoria === categoria : true;
+      
+      return matchesTermo && matchesCategoria;
+    });
+  };
+
   return {
     membros,
     isLoading,
     adicionarMembro,
     atualizarMembro,
-    removerMembro
+    removerMembro,
+    filtrarMembros
   };
 }

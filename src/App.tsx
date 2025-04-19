@@ -1,36 +1,44 @@
 
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
-import Membros from "./pages/Membros";
 import Eventos from "./pages/Eventos";
 import Recursos from "./pages/Recursos";
+import Membros from "./pages/Membros";
 import Calendario from "./pages/Calendario";
+import Presencas from "./pages/Presencas";
+import "./App.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Index />} />
-            <Route path="/membros" element={<Membros />} />
-            <Route path="/eventos" element={<Eventos />} />
-            <Route path="/recursos" element={<Recursos />} />
-            <Route path="/calendario" element={<Calendario />} />
+            <Route path="eventos" element={<Eventos />} />
+            <Route path="recursos" element={<Recursos />} />
+            <Route path="membros" element={<Membros />} />
+            <Route path="calendario" element={<Calendario />} />
+            <Route path="presencas" element={<Presencas />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
-          <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+      <Toaster position="top-right" closeButton richColors />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
