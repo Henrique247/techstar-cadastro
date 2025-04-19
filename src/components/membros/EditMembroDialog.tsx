@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { Membro } from "@/types/models";
 
 interface EditMembroDialogProps {
@@ -19,24 +20,82 @@ interface EditMembroDialogProps {
   onClose: () => void;
   onSave: (membro: Partial<Membro> & { id: string }) => void;
   membro: Membro;
+  isSaving?: boolean;
 }
 
-const EditMembroDialog = ({ open, onClose, onSave, membro }: EditMembroDialogProps) => {
+const EditMembroDialog = ({ 
+  open, 
+  onClose, 
+  onSave, 
+  membro,
+  isSaving = false
+}: EditMembroDialogProps) => {
   const [formData, setFormData] = useState<Membro>(membro);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setFormData(membro);
+    setHasChanges(false);
+    setErrors({});
   }, [membro]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value || null }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value || null };
+      // Comparar o campo com o valor original para detectar mudanças
+      const originalValue = membro[name as keyof Membro];
+      const hasFieldChanged = value !== (originalValue || "");
+      
+      // Se algum campo mudou, marcar como tendo mudanças
+      if (hasFieldChanged || hasChanges) {
+        setHasChanges(true);
+      }
+      
+      return newData;
+    });
+
+    // Validação básica
+    if (name === "nome" && !value.trim()) {
+      setErrors(prev => ({ ...prev, nome: "Nome é obrigatório" }));
+    } else if (name === "nome" && value.trim()) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.nome;
+        return newErrors;
+      });
+    }
+    
+    if (name === "email" && value && !/\S+@\S+\.\S+/.test(value)) {
+      setErrors(prev => ({ ...prev, email: "Email inválido" }));
+    } else if (name === "email") {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.email;
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar validação antes de enviar
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+    
+    if (!formData.nome || !formData.data_entrada) {
+      setErrors({
+        ...(!formData.nome ? { nome: "Nome é obrigatório" } : {}),
+        ...(!formData.data_entrada ? { data_entrada: "Data de entrada é obrigatória" } : {})
+      });
+      return;
+    }
+    
     onSave(formData);
   };
 
@@ -55,14 +114,22 @@ const EditMembroDialog = ({ open, onClose, onSave, membro }: EditMembroDialogPro
               <Label htmlFor="nome" className="text-right">
                 Nome
               </Label>
-              <Input
-                id="nome"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="nome"
+                  name="nome"
+                  value={formData.nome}
+                  onChange={handleChange}
+                  className={`${errors.nome ? 'border-red-500' : ''}`}
+                  required
+                />
+                {errors.nome && (
+                  <p className="text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.nome}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="telefone" className="text-right">
@@ -80,28 +147,44 @@ const EditMembroDialog = ({ open, onClose, onSave, membro }: EditMembroDialogPro
               <Label htmlFor="email" className="text-right">
                 Email
               </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email || ""}
-                onChange={handleChange}
-                className="col-span-3"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  className={`${errors.email ? 'border-red-500' : ''}`}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.email}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="data_entrada" className="text-right">
                 Data de Entrada
               </Label>
-              <Input
-                id="data_entrada"
-                name="data_entrada"
-                type="date"
-                value={formData.data_entrada}
-                onChange={handleChange}
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="data_entrada"
+                  name="data_entrada"
+                  type="date"
+                  value={formData.data_entrada}
+                  onChange={handleChange}
+                  className={`${errors.data_entrada ? 'border-red-500' : ''}`}
+                  required
+                />
+                {errors.data_entrada && (
+                  <p className="text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.data_entrada}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="data_nascimento" className="text-right">
@@ -143,10 +226,35 @@ const EditMembroDialog = ({ open, onClose, onSave, membro }: EditMembroDialogPro
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <div className="flex flex-1 items-center justify-start text-sm text-muted-foreground">
+              {hasChanges && (
+                <span className="flex items-center text-amber-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Alterações não salvas
+                </span>
+              )}
+              {!hasChanges && !isSaving && (
+                <span className="flex items-center text-green-600">
+                  <Check className="h-4 w-4 mr-1" />
+                  Sem alterações
+                </span>
+              )}
+            </div>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button 
+              type="submit" 
+              disabled={!hasChanges || isSaving || Object.keys(errors).length > 0}
+              className="min-w-[100px]"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : "Salvar"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
